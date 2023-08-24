@@ -13,11 +13,12 @@ class CreatePillRemindersTable extends Migration
      */
     public function up()
     {
-        Schema::create('pill_reminders', function (Blueprint $table) {
+        Schema::create('dosages', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger("user_id");
             $table->string("pill_name");
             $table->date("start_date");
+            $table->date("end_date");
             $table->json("dosage_times");
             $table->string("dosage_frequency");
             $table->timestamp("next_dosage_time")->nullable();

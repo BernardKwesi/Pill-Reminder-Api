@@ -67,12 +67,6 @@ class AuthController extends Controller
                 ]);
             }
 
-
-
-
-
-
-
             $token =  $authenticatedUser->createToken('loginToken');
 
 
@@ -90,7 +84,7 @@ class AuthController extends Controller
                 "data"=> $payload
             ]);
 
-        }catch(Exception $e){
+        }catch(\Exception $e){
 
             Log::error($e->getMessage());
 
