@@ -42,8 +42,7 @@ class AuthController extends Controller
             }
 
 
-            $authenticatedUser = User::where("deleted", "0")
-                ->where(function($query) use ($request){
+            $authenticatedUser = User::where(function($query) use ($request){
                     return $query->where("email", $request->userid)
                         ->orWhere("phone", $request->userid);
                 })
@@ -78,8 +77,9 @@ class AuthController extends Controller
 
 
             $payload = [
-                "fullname"=> $authenticatedUser->intern->fname,
+                "fullname"=> $authenticatedUser->name,
                 "phone" => $authenticatedUser->phone,
+                "email" => $authenticatedUser->email,
                 "token" =>$token->plainTextToken,
 
             ];
@@ -112,14 +112,13 @@ class AuthController extends Controller
         $validator = Validator::make(
             $request->all(),
             [
-                "fname" => ['required', 'string', 'max:255'],
-                "lname" => ['required', 'string', 'max:255'],
-                "email" => ['required',  'email', 'max:255', 'unique:user,email'],
-                "phone" => ['required','unique:user,phone','max:10', "min:10"],
+                "name" => ['required', 'string', 'max:255'],
+                "email" => ['required',  'email', 'max:255', 'unique:users,email'],
+                "phone" => ['required','unique:users,phone','max:10', "min:10"],
                 "password"=> ['required']
             ],
             [
-                "fullname.required" => "Name is required",
+                "name.required" => "Name is required",
                 "email.required" => "Email is required",
                 "email.unique"=> "Email Address already exists",
                 "phone.required" => "Phone number is required",
@@ -146,6 +145,7 @@ class AuthController extends Controller
             DB::beginTransaction();
 
             $user = User::create([
+                "name" => $request->name,
                 "email"=> $request->email,
                 "phone" => $request->phone,
                 "password" =>Hash::make($request->password),
@@ -158,14 +158,11 @@ class AuthController extends Controller
             $token =  $user->createToken('loginToken');
 
             $payload = [
-                "fullname"=> $request->fname,
-                "amount" => (float)optional($user->intern)->qualification->amount ,
-                "user_id"=> $user->id,
+                "name"=> $user->name,
+                "id"=> $user->id,
                 "email"=> $user->email,
                 "phone" => $user->phone,
                 "token" =>$token->plainTextToken,
-
-
             ];
 
             DB::commit();
