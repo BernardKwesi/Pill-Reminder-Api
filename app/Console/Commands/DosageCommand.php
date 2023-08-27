@@ -49,7 +49,7 @@ class DosageCommand extends Command
 
 
             foreach ($dosageTimes as $dosageTime) {
-                if ($dosageTime === $currentDateTime->format('H:i')) {
+//                if ($dosageTime === $currentDateTime->format('H:i')) {
                     Log::info("Reminder:". $dosageTime);
 
                     $nextDosageTime = Carbon::parse($dosageTime);
@@ -77,12 +77,12 @@ class DosageCommand extends Command
                     )
                         ->update([
                             "timestamp" => time(),
-                             "medCode"=> "MED00".$pillReminders->id,
+                             "medCode"=> "MED00".$pillReminder->id,
                              "title"=> $pillName,
                              "message" => "It is time to take your medication"
                         ]);
                 }
             }
         }
-    }
+//    }
 }

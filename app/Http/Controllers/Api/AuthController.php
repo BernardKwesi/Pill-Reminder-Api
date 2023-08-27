@@ -72,6 +72,7 @@ class AuthController extends Controller
 
             $payload = [
                 "fullname"=> $authenticatedUser->name,
+                "user_id" => $authenticatedUser->id,
                 "phone" => $authenticatedUser->phone,
                 "email" => $authenticatedUser->email,
                 "token" =>$token->plainTextToken,
