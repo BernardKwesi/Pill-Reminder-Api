@@ -2,7 +2,10 @@
 
 namespace App\Console\Commands;
 
+use App\Models\Dosage;
+use Carbon\Carbon;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
 
 class DosageCommand extends Command
 {
@@ -11,7 +14,7 @@ class DosageCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'command:name';
+    protected $signature = 'dosage:notify';
 
     /**
      * The console command description.
@@ -27,6 +30,7 @@ class DosageCommand extends Command
      */
     public function __construct()
     {
+        $this->database = \App\Services\FirebaseService::connect();
         parent::__construct();
     }
 
@@ -37,6 +41,48 @@ class DosageCommand extends Command
      */
     public function handle()
     {
-        return 0;
+        $pillReminders = Dosage::all();
+        $currentDateTime = Carbon::now();
+        foreach ($pillReminders as $pillReminder) {
+
+            $dosageTimes =json_decode($pillReminder->dosage_times, true);
+
+
+            foreach ($dosageTimes as $dosageTime) {
+                if ($dosageTime === $currentDateTime->format('H:i')) {
+                    Log::info("Reminder:". $dosageTime);
+
+                    $nextDosageTime = Carbon::parse($dosageTime);
+
+                    if ($pillReminder->dosage_frequency === 'weekly') {
+                        $nextDosageTime->addWeek();
+                    } elseif ($pillReminder->dosage_frequency === 'daily') {
+                        $nextDosageTime->addDay();
+                    } elseif ($pillReminder->dosage_frequency === 'monthly') {
+                        $nextDosageTime->addMonth();
+                    }
+
+                    // Calculate interval between current time and dosage time
+                    $timeUntilDosage = $nextDosageTime->diffInMinutes(Carbon::now());
+
+                    $user = $pillReminder->user->name;
+                    $pillName = $pillReminder->pill_name;
+
+                    // Schedule the notification
+
+                    Log::info("Scheduling notification $user : $pillName");
+                    // Send notification to Firebase
+                    // Include FCM logic here
+                    $this->database->getReference('notifications/'.$pillReminder->user_id.'/'.time()
+                    )
+                        ->update([
+                            "timestamp" => time(),
+                             "medCode"=> "MED00".$pillReminders->id,
+                             "title"=> $pillName,
+                             "message" => "It is time to take your medication"
+                        ]);
+                }
+            }
+        }
     }
 }
