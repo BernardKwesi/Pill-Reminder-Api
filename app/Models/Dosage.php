@@ -11,7 +11,7 @@ class Dosage extends Model
     protected $table = "pill_reminders";
 
     protected $fillable = [
-        "id","user_id","pill_name","start_date","medication_quantity","quantity_per_dose","dosage_times","dosage_frequency","dosage_interval","next_dosage_time"
+        "id","user_id","pill_name","start_date","updated_quantity","medication_quantity","quantity_per_dose","dosage_times","dosage_frequency","dosage_interval","next_dosage_time"
     ];
 
     public function user()

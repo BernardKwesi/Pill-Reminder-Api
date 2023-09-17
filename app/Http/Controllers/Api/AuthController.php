@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -183,6 +184,122 @@ class AuthController extends Controller
                 ]
             ]);
         }
+
+    }
+    
+    public function destroy(Request $request) : JsonResponse
+    {
+    
+           $validator = Validator::make(
+            $request->all(),
+            [
+                "user_id" => ['required'],
+                "password" => ['required'],
+                // "email" => ['required'],
+            ],
+            [
+                "name.required" => "Name is required",
+                "email.required" => "Email is required",
+                "email.unique"=> "Email Address already exists",
+      
+
+            ]
+        );
+
+        if ($validator->fails()) {
+            return response()->json([
+                "ok" => false,
+                "msg" => "Account deletion failed. " . join(" ,", $validator->errors()->all()),
+                "error" => [
+                    "msg" => "Request validation failed. " . join(" ,", $validator->errors()->all()),
+                    "fix" => "Please fix all validation errors",
+                ]
+            ]);
+        }
+        
+        
+        
+        try{
+            
+            $user = User::where("id", $request->user_id)->first();
+        
+             if (!Hash::check($request->password, $user->password)) {
+    
+                    return response()->json([
+                        "ok"=> false,
+                        "msg"=>"Wrong password provided",
+                        "data" => []
+                    ]);
+                }
+                
+            $user->delete();
+            
+            return response()->json([
+                "ok"=> true,
+                "msg"=>"User Account deleted successfully",
+                "data" => []
+            ]);
+        
+        }catch(Exception $e){
+             Log::error($e->getMessage());
+            return response()->json([
+                "ok" => false,
+                "msg" => "An internal error occurred",
+            ],500);
+        
+        }
+        
+    
+    }
+    
+   public function logout(Request $request) : JsonResponse
+    {
+
+        $validator = Validator::make(
+            $request->all(),
+            [
+                "user_id" => "required",
+            ]
+        );
+
+        // Payload to be sent with response
+        $payload = [
+            "ok" => false,
+        ];
+
+        if ($validator->fails()) {
+            $payload["msg"] = "Sorry, all fields are required";
+            $payload["error"] = [
+                "msg" => join(" ", $validator->errors()->all()),
+                "fix" => "Kindly fix the above errors",
+            ];
+            return response()->json($payload);
+        }
+
+        $user = User::where("id", $request->user_id)->first();
+        if(empty($user)){
+            return response()->json([
+                "ok" => false,
+                "msg" => "Unknown user id supplied"
+            ]);
+        }
+        try{
+            $user->tokens()->delete();
+            return response()->json([
+                "ok" =>true,
+                "msg" => "User logged out success"
+            ]);
+
+        }catch (Exception $e){
+
+            Log::error("Error Logging user out ".$e->getMessage());
+
+            return response()->json([
+                "ok" => false,
+                "msg" => "Error occurred logging out. Please try again later ..."
+            ]);
+        }
+
 
     }
 }
