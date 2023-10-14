@@ -15,6 +15,7 @@ class DosageCommand extends Command
      * @var string
      */
     protected $signature = 'dosage:notify';
+    private $database;
 
     /**
      * The console command description.
@@ -42,47 +43,69 @@ class DosageCommand extends Command
     public function handle()
     {
         $pillReminders = Dosage::all();
-        $currentDateTime = Carbon::now();
+        $currentDateTime = time();
         foreach ($pillReminders as $pillReminder) {
 
-            $dosageTimes =json_decode($pillReminder->dosage_times, true);
+            $dosageTimes =json_decode($pillReminder->next_dosage_time, true);
 
+            foreach($dosageTimes as $dosage){
 
-            foreach ($dosageTimes as $dosageTime) {
-                if ($dosageTime === $currentDateTime->format('H:i')) {
-                    Log::info("Reminder:". $dosageTime);
-
-                    $nextDosageTime = Carbon::parse($dosageTime);
-
-                    if ($pillReminder->dosage_frequency === 'weekly') {
-                        $nextDosageTime->addWeek();
-                    } elseif ($pillReminder->dosage_frequency === 'daily') {
-                        $nextDosageTime->addDay();
-                    } elseif ($pillReminder->dosage_frequency === 'monthly') {
-                        $nextDosageTime->addMonth();
-                    }
-
-                    // Calculate interval between current time and dosage time
-                    $timeUntilDosage = $nextDosageTime->diffInMinutes(Carbon::now());
+                if($dosage == $currentDateTime){
 
                     $user = $pillReminder->user->name;
                     $pillName = $pillReminder->pill_name;
 
-                    // Schedule the notification
 
-                    Log::info("Scheduling notification $user : $pillName");
+                    Log::info("Scheduling notification $user : $pillName  timestamp : $dosage");
                     // Send notification to Firebase
                     // Include FCM logic here
                     $this->database->getReference('notifications/'.$pillReminder->user_id.'/'.time()
                     )
                         ->update([
                             "timestamp" => time(),
-                             "medCode"=> "MED00".$pillReminder->id,
-                             "title"=> $pillName,
-                             "message" => "It is time to take your medication"
+                            "medCode"=> $pillReminder->id,
+                            "title"=> $pillName,
+                            "message" => "It is time to take your medication"
                         ]);
+
+                    $result = $this->addDaysBasedOnFrequency($dosage, $pillReminder->dosage_frequency);
+                    $updatedTimestamp = $result->timestamp;
+
+                    // Schedule the notification
+                    $position = array_search($dosage, $dosageTimes);
+                    
+                    $dosageTimes[$position] = $updatedTimestamp; 
+                    
+                    $pillReminder->update([
+                        "next_dosage_time" => json_encode($dosageTimes)
+                    ]);
+                    
                 }
+
+
             }
+
+
+
+        }
+    }
+
+
+
+    private function addDaysBasedOnFrequency($timestamp, $frequency) {
+        // Create a Carbon instance from the timestamp
+        $carbon = Carbon::createFromTimestamp($timestamp);
+
+
+        switch ($frequency) {
+            case "once_a_week":
+                return $carbon->addWeek();
+            case "every_two_days":
+                return $carbon->addDays(2);
+            case "every_three_days":
+                return $carbon->addDays(3);
+            default:
+                return $carbon->addDays(1);
         }
     }
 }

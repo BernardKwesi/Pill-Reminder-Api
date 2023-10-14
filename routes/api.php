@@ -32,3 +32,16 @@ Route::prefix("dosages")->middleware('auth:sanctum')->group(function (){
 
 Route::post("users/delete", [AuthController::class, "destroy"])->middleware('auth:sanctum');
 Route::post("logout", [AuthController::class, "logout"])->middleware('auth:sanctum');
+
+Route::get("test", function(){
+
+
+    $times = [1695521700,1695522000,1695430500,1695349500];
+    $newDate = [];
+    foreach ($times as $time){
+        $carbon = Carbon\Carbon::createFromTimestamp($time);
+        $newDate[] = $carbon;
+    }
+
+    return $newDate;
+});
