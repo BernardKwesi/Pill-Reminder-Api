@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class Dosage extends Model
 {
     use HasFactory;
-    protected $table = "pill_reminders";
+    protected $table = "dosages";
 
     protected $fillable = [
         "id","user_id","pill_name","start_date","updated_quantity","medication_quantity","quantity_per_dose","dosage_times","dosage_frequency","dosage_interval","next_dosage_time"

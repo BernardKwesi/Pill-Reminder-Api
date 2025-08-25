@@ -73,11 +73,6 @@ class DosageController extends Controller
             }
 
 
-
-
-
-
-
             Dosage::create([
                 "user_id" => $user->id,
                 "pill_name" => $request->pill_name,
@@ -97,7 +92,7 @@ class DosageController extends Controller
             ],200);
         }
         catch(\Exception $e){
-            // Log::error($e->getMessage());
+            Log::error($e->getMessage());
             return response()->json([
                 "ok" => false,
                 "msg" => "An internal error occurred",

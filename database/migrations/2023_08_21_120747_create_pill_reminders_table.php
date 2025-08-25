@@ -19,9 +19,9 @@ class CreatePillRemindersTable extends Migration
             $table->string("pill_name");
             $table->date("start_date");
             $table->date("end_date");
-            $table->json("dosage_times");
+            $table->json("dosage_times")->nullable();
             $table->string("dosage_frequency");
-            $table->timestamp("next_dosage_time")->nullable();
+            $table->json("next_dosage_time")->nullable();
             $table->timestamps();
         });
     }
